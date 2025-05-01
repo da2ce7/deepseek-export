@@ -1,6 +1,6 @@
 
 // Structural selector (update as needed)
-const CHAT_SELECTOR = 'div#root > div > div:nth-child(2) > div:nth-child(2) > div > div:nth-child(2)';
+const CHAT_SELECTOR = 'div#root > div > div:nth-child(1) > div > div:nth-child(3) > div > div:nth-child(2)';
 
 initializeExportButton();
 
