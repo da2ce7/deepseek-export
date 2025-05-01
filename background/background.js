@@ -1,33 +1,47 @@
+
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'exportChat') {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const format = request.format;
-    const filename = `deepseek-chat-${timestamp}.${format}`;
+    const filename = `deepseek-chat-${timestamp}.${request.format}`;
 
-    try {
-      let blob;
-      if (format === 'html') {
-        const htmlContent = generateHtml(request.content);
-        blob = new Blob([htmlContent], { type: 'text/html' });
-      } else if (format === 'md') {
-        const markdownContent = request.content.markdown;
-        blob = new Blob([markdownContent], { type: 'text/markdown' });
-      }
-
+    if (request.format === 'html') {
+      const htmlContent = generateHtml(request.content);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
       chrome.downloads.download({
         url: URL.createObjectURL(blob),
         filename,
         saveAs: true
       });
+    } else if (request.format === 'pdf') {
+      // Handle PDF download
+      const pdfBlob = dataURLtoBlob(request.pdfData);
+      const pdfUrl = URL.createObjectURL(pdfBlob);
 
-      sendResponse({ success: true });
-    } catch (error) {
-      console.error('Export error:', error);
-      sendResponse({ success: false, error: error.message });
+      chrome.downloads.download({
+        url: pdfUrl,
+        filename,
+        saveAs: true
+      });
     }
+
+    sendResponse({ success: true });
   }
 });
+
+// Helper function to convert data URL to Blob
+function dataURLtoBlob(dataURL) {
+  const byteString = atob(dataURL.split(',')[1]);
+  const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+
+  return new Blob([ab], { type: mimeString });
+}
 
 function generateHtml(content) {
   return `
@@ -56,3 +70,5 @@ function generateHtml(content) {
     </html>
   `;
 }
+
+
