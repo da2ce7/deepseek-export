@@ -44,12 +44,20 @@ function dataURLtoBlob(dataURL) {
 }
 
 function generateHtml(content) {
+  // SECURITY WARNING: content.html is from an external source and must be sanitized
+  // to prevent XSS attacks. Using a library like DOMPurify is strongly recommended.
+  // Example: const sanitizedHtml = DOMPurify.sanitize(content.html);
+  // As a placeholder, we are using the raw HTML but this is NOT secure.
+  const sanitizedHtml = content.html; // UNSAFE: Replace with a real sanitizer
+  const escapedTitle = escapeHtml(content.title);
+
   return `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${content.title}</title>
+      <title>${escapedTitle}</title>
       <style>
+        /* SECURITY WARNING: content.styles can also be a vector for attacks. Sanitize if possible. */
         ${content.styles}
         body { padding: 20px; font-family: Arial, sans-serif; }
         /* Fix content not showing up problem */
@@ -65,10 +73,19 @@ function generateHtml(content) {
       </style>
     </head>
     <body>
-      ${content.html}
+      ${sanitizedHtml}
     </body>
     </html>
   `;
+}
+
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, '"')
+    .replace(/'/g, '&#039;');
 }
 
 
