@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "DeepSeek Chat Export",
   "version": "1.0",
   "description": "Export your DeepSeek chat histories as HTML files which you can save locally and share with others",
@@ -8,7 +8,9 @@
     "96": "src/assets/icon-96.png"
   },
   "permissions": [
-    "downloads",
+    "downloads"
+  ],
+  "host_permissions": [
     "*://chat.deepseek.com/*"
   ],
   "background": {
@@ -25,6 +27,9 @@
       ]
     }
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "tirthankar.saha@virtunetsystems.com",
