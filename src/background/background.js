@@ -76,11 +76,14 @@ function generateHtml(content) {
   `;
 }
 
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function escapeHtml(text) {
+  var map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+
+  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
