@@ -4,21 +4,24 @@
   "version": "1.0",
   "description": "Export your DeepSeek chat histories as HTML files which you can save locally and share with others",
   "icons": {
-    "48": "assets/icon-48.png",
-    "96": "assets/icon-96.png"
+    "48": "src/assets/icon-48.png",
+    "96": "src/assets/icon-96.png"
   },
   "permissions": [
     "downloads",
     "*://chat.deepseek.com/*"
   ],
   "background": {
-    "scripts": ["background/background.js"]
+    "scripts": ["dist/background/background.js"]
   },
   "content_scripts": [
     {
       "matches": ["*://chat.deepseek.com/*"],
       "js": [
-        "content/content.js"
+        "dist/content/content.js"
+      ],
+      "css": [
+        "dist/assets/content.css"
       ]
     }
   ],

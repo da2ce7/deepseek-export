@@ -1,0 +1,19 @@
+# Logs
+report.txt
+
+# Package Lock Files
+package-lock.json
+
+# Dependencies
+node_modules/
+.yarn/
+
+# Build output
+dist/
+
+# Packaging
+*.xpi
+*.zip
+
+# Reports
+report.txt

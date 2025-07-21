@@ -1,4 +1,6 @@
 
+import '../styles/style.css';
+
 // Structural selector (update as needed)
 const CHAT_SELECTOR = 'div#root > div > div:nth-child(1) > div > div:nth-child(3) > div > div:nth-child(2)';
 
@@ -10,18 +12,7 @@ function initializeExportButton() {
   // Inject export button
   const exportButton = document.createElement('button');
   exportButton.innerHTML = 'Export Chat';
-  exportButton.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 10px 20px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  `;
+  exportButton.id = 'export-button';
   document.body.appendChild(exportButton);
 
   // Export handler
