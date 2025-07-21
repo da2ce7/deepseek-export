@@ -1,19 +1,20 @@
+import DOMPurify from "dompurify";
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'exportChat') {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  if (request.action === "exportChat") {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `deepseek-chat-${timestamp}.${request.format}`;
 
-    if (request.format === 'html') {
+    if (request.format === "html") {
       const htmlContent = generateHtml(request.content);
-      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const blob = new Blob([htmlContent], { type: "text/html" });
       chrome.downloads.download({
         url: URL.createObjectURL(blob),
         filename,
-        saveAs: true
+        saveAs: true,
       });
-    } else if (request.format === 'pdf') {
+    } else if (request.format === "pdf") {
       // Handle PDF download
       const pdfBlob = dataURLtoBlob(request.pdfData);
       const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -21,7 +22,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       chrome.downloads.download({
         url: pdfUrl,
         filename,
-        saveAs: true
+        saveAs: true,
       });
     }
 
@@ -31,8 +32,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Helper function to convert data URL to Blob
 function dataURLtoBlob(dataURL) {
-  const byteString = atob(dataURL.split(',')[1]);
-  const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+  const byteString = atob(dataURL.split(",")[1]);
+  const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
   const ab = new ArrayBuffer(byteString.length);
   const ia = new Uint8Array(ab);
 
@@ -44,11 +45,8 @@ function dataURLtoBlob(dataURL) {
 }
 
 function generateHtml(content) {
-  // SECURITY WARNING: content.html is from an external source and must be sanitized
-  // to prevent XSS attacks. Using a library like DOMPurify is strongly recommended.
-  // Example: const sanitizedHtml = DOMPurify.sanitize(content.html);
-  // As a placeholder, we are using the raw HTML but this is NOT secure.
-  const sanitizedHtml = content.html; // UNSAFE: Replace with a real sanitizer
+  const sanitizedHtml = DOMPurify.sanitize(content.html);
+  const sanitizedStyles = DOMPurify.sanitize(content.styles);
   const escapedTitle = escapeHtml(content.title);
 
   return `
@@ -57,8 +55,7 @@ function generateHtml(content) {
     <head>
       <title>${escapedTitle}</title>
       <style>
-        /* SECURITY WARNING: content.styles can also be a vector for attacks. Sanitize if possible. */
-        ${content.styles}
+        ${sanitizedStyles}
         body { padding: 20px; font-family: Arial, sans-serif; }
         /* Fix content not showing up problem */
         body > div {
@@ -84,8 +81,6 @@ function escapeHtml(unsafe) {
     .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
-    .replace(/"/g, '"')
-    .replace(/'/g, '&#039;');
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
-
-

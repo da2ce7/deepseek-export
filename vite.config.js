@@ -18,12 +18,10 @@ export default defineConfig({
     minify: false,
     rollupOptions: {
       input: {
-        'background/background': resolve(__dirname, 'src/background/background.js'),
         'content/content': resolve(__dirname, 'src/content/content.js'),
       },
       output: {
         entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name].js',
         assetFileNames: 'assets/[name].[ext]',
       },
     },

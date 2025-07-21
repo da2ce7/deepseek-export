@@ -7,12 +7,8 @@
     "48": "src/assets/icon-48.png",
     "96": "src/assets/icon-96.png"
   },
-  "permissions": [
-    "downloads"
-  ],
-  "host_permissions": [
-    "*://chat.deepseek.com/*"
-  ],
+  "permissions": ["downloads"],
+  "host_permissions": ["*://chat.deepseek.com/*"],
   "background": {
     "scripts": ["dist/background/background.js"]
   },
