@@ -10,10 +10,25 @@ A Firefox extension to export your DeepSeek chat histories as HTML files which y
 ## Installation
 Install from : https://addons.mozilla.org/en-US/firefox/addon/deepseek-chat-export/
 
-## Temporary Installation
-1. Zip this folder and rename the extension as '.xpi'
-2. Go to `about:debugging#/runtime/this-firefox` in Firefox.
-3. Click "Load Temporary Add-on" and select the `.xpi` file.
+## Development Setup
+
+To set up the project for development, you'll need to use Yarn v4 and Corepack.
+
+1.  **Enable Corepack**: If you haven't already, enable Corepack to manage Yarn versions:
+    ```bash
+    corepack enable
+    ```
+
+2.  **Install Dependencies**: Install the project dependencies using Yarn. This will use the Plug'n'Play (PnP) linker.
+    ```bash
+    yarn install
+    yarn build
+    ```
+
+3.  **Load the Extension in Firefox**:
+    1.  Navigate to `about:debugging#/runtime/this-firefox` in Firefox.
+    2.  Click "Load Temporary Add-on...".
+    3.  Select the `manifest.json` file from the project's root directory.
 
 ## Usage
 1. Open DeepSeek's chat interface.
