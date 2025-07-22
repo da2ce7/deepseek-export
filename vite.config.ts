@@ -18,7 +18,7 @@ export default defineConfig({
     minify: false,
     rollupOptions: {
       input: {
-        'content/content': resolve(__dirname, 'src/content/content.js'),
+        'content/content': resolve(__dirname, 'src/content/content.ts'),
       },
       output: {
         entryFileNames: '[name].js',

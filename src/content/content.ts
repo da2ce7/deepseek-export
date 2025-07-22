@@ -1,3 +1,4 @@
+/// <reference types="chrome" />
 import "../styles/style.css";
 
 // Structural selector (update as needed)
@@ -24,7 +25,7 @@ function initializeExportButton() {
           format: "html",
           content,
         },
-        (response) => {
+        (response: { success: boolean; error?: any }) => {
           if (!response?.success) {
             console.error(
               "DeepSeek Export: HTML export failed:",
@@ -33,7 +34,7 @@ function initializeExportButton() {
           }
         },
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("DeepSeek Export: Export failed:", error);
       alert(`Export failed: ${error.message}`);
     }
@@ -41,22 +42,22 @@ function initializeExportButton() {
 }
 
 // Ensure elements have valid height
-function ensureElementHeight(element) {
+function ensureElementHeight(element: Element) {
   if (!element) return;
 
   const computedStyle = window.getComputedStyle(element);
   const height = computedStyle.height;
 
   if (height === "0px") {
-    element.style.minHeight = "1px"; // Set a minimum height
+    (element as HTMLElement).style.minHeight = "1px"; // Set a minimum height
   }
 
   // Handle flexbox and grid layouts
   if (computedStyle.display === "flex" && height === "0px") {
-    element.style.flex = "1 1 auto";
+    (element as HTMLElement).style.flex = "1 1 auto";
   }
   if (computedStyle.display === "grid" && height === "0px") {
-    element.style.gridAutoRows = "minmax(1px, auto)";
+    (element as HTMLElement).style.gridAutoRows = "minmax(1px, auto)";
   }
 
   // Recursively check child elements
@@ -64,13 +65,13 @@ function ensureElementHeight(element) {
 }
 
 // Force layout recalculation
-function forceLayoutRecalculation(element) {
+function forceLayoutRecalculation(element: HTMLElement) {
   element.offsetHeight; // Forces reflow
 }
 
 // Capture chat content
 function captureChatContent() {
-  const chatContainer = document.querySelector(CHAT_SELECTOR);
+  const chatContainer = document.querySelector<HTMLElement>(CHAT_SELECTOR);
   if (!chatContainer) {
     console.error("DeepSeek Export: Chat container not found!");
     throw new Error("Chat container not found");
@@ -80,7 +81,7 @@ function captureChatContent() {
   forceLayoutRecalculation(chatContainer);
 
   // Clone with styles
-  const clone = chatContainer.cloneNode(true);
+  const clone = chatContainer.cloneNode(true) as HTMLElement;
 
   // Ensure all elements have valid height
   ensureElementHeight(clone);

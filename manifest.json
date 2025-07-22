@@ -10,7 +10,8 @@
   "permissions": ["downloads"],
   "host_permissions": ["https://chat.deepseek.com/*"],
   "background": {
-    "scripts": ["dist/background/background.js"]
+    "scripts": ["dist/background/background.js"],
+    "type": "module"
   },
   "content_scripts": [
     {

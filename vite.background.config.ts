@@ -7,7 +7,7 @@ export default defineConfig({
     minify: false,
     rollupOptions: {
       input: {
-        background: resolve(__dirname, 'src/background/background.js'),
+        background: resolve(__dirname, 'src/background/background.ts'),
       },
       output: {
         entryFileNames: '[name].js',
