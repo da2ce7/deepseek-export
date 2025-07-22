@@ -1,4 +1,5 @@
 import showdown from "showdown";
+import { ensureCodeView } from "./switcher-utils";
 const SELECTORS = {
   USER_PROMPT: ".fbb737a4",
   AI_ANSWER: "._4f9bf79",
@@ -17,9 +18,16 @@ interface Conversation {
 }
 
 // Main function to convert chat container to Markdown
-export function toMarkdown(chatContainer: HTMLElement): string {
+export async function toMarkdown(
+  chatContainer: HTMLElement,
+  callback: (_markdown: string) => void,
+): Promise<void> {
+  // Ensure the code view is active before extracting content
+  await ensureCodeView(chatContainer);
+
   const conversations = extractConversations(chatContainer);
-  return formatMarkdown(conversations);
+  const markdown = formatMarkdown(conversations);
+  callback(markdown);
 }
 
 // Extract conversations from the DOM
@@ -78,15 +86,24 @@ function cleanContent(
     // For prompts, we want mostly plain text, preserving line breaks.
     return clone.innerText.replace(/\n{3,}/g, "\n\n").trim();
   } else if (type === "thinking") {
-    // For thinking blocks, convert divs and paragraphs to newlines
-    let html = clone.innerHTML;
-    html = html.replace(/<div[^>]*>/g, "\n").replace(/<\/div>/g, "");
-    html = html.replace(/<p[^>]*>/g, "\n").replace(/<\/p>/g, "");
-    html = html.replace(/<br\s*\/?>/g, "\n");
-    // Now remove remaining HTML tags
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
-    return tempDiv.textContent?.trim() || "";
+    // Remove the decorative div before processing
+    clone.querySelector("._9ecc93a")?.remove();
+
+    let content = "";
+    // Manually walk through nodes to preserve line breaks from text and divs.
+    clone.childNodes.forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        content += child.textContent;
+      } else if (
+        child.nodeType === Node.ELEMENT_NODE &&
+        (child as HTMLElement).tagName === "DIV"
+      ) {
+        content += "\n";
+      }
+    });
+
+    // Consolidate multiple newlines and trim whitespace
+    return content.replace(/\n{3,}/g, "\n\n").trim();
   } else {
     // For responses, we return the innerHTML to be processed by showdown
     return clone.innerHTML;
@@ -105,15 +122,15 @@ function formatMarkdown(conversations: Conversation[]): string {
     if (conv.type === "user") {
       if (index > 0) md += "\n---\n";
       const userContent = (conv.content as string);
-      md += `\n> [!info] User\n ${userContent}\n\n`;
+      md += `\n[!user]\n${userContent}\n\n`;
     } else if (conv.type === "ai") {
       const aiContent = conv.content as { thinking: string; response: string };
       if (aiContent.thinking) {
         const thinkingContent = aiContent.thinking.split("\n").join("\n> ");
-        md += `\n [!success] Thinking\n> ${thinkingContent}\n`;
+        md += `\n[!think]\n> ${thinkingContent}\n`;
       }
       if (aiContent.response) {
-        md += `\n${htmlToMarkdown(aiContent.response)}\n`;
+        md += `\n[!response]\n${htmlToMarkdown(aiContent.response)}\n`;
       }
     }
   });
@@ -141,12 +158,28 @@ function htmlToMarkdown(html: string): string {
 
   // Pre-process code blocks
   tempDiv.querySelectorAll(SELECTORS.CODE_BLOCK).forEach((codeBlock) => {
-    const lang =
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+
+    let lang =
       codeBlock.querySelector(SELECTORS.CODE_BLOCK_INFO)?.textContent?.trim() ||
       "";
-    const codeContent = codeBlock.querySelector("pre")?.textContent || "";
-    codeBlock.replaceWith(`\n\`\`\`${lang}\n${codeContent}\n\`\`\`\n`);
+    const tabs = codeBlock.querySelectorAll(".ds-segmented-button");
+    if (tabs.length === 2 && tabs[0].textContent === "Diagram") {
+      lang = "mermaid";
+    }
+
+    if (lang) {
+      code.className = `language-${lang}`;
+    }
+    code.textContent = codeBlock.querySelector("pre")?.textContent || "";
+    pre.appendChild(code);
+    codeBlock.replaceWith(pre);
   });
+  // Clean up empty elements that might create unwanted newlines or comments
+  tempDiv
+    .querySelectorAll("p:empty, div:empty")
+    .forEach((el) => el.remove());
 
   const converter = new showdown.Converter({
     ghCompatibleHeaderId: true,
@@ -154,5 +187,8 @@ function htmlToMarkdown(html: string): string {
     ghMentions: true,
     tables: true,
   });
-  return converter.makeMarkdown(tempDiv.innerHTML);
+
+  const markdown = converter.makeMarkdown(tempDiv.innerHTML);
+  // Post-process to remove erroneous empty comments and extra newlines
+  return markdown.replace(/\n?<!-- -->\n?/g, "");
 }

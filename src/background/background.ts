@@ -7,51 +7,62 @@ chrome.runtime.onMessage.addListener(
   (
     request: {
       action: string;
-      format: "html" | "md";
-      content: string | HtmlContent;
+      format?: "html" | "md";
+      content?: string | HtmlContent;
+      markdown?: string;
     },
-    _sender: chrome.runtime.MessageSender,
+    sender: chrome.runtime.MessageSender,
     sendResponse: (_response: { success: boolean; error?: string }) => void,
   ) => {
-    if (request.action !== "exportChat") {
-      return;
-    }
-
-    try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `deepseek-chat-${timestamp}.${request.format}`;
-
-      if (request.format === "html") {
-        const htmlContent = generateHtml(request.content as HtmlContent);
-        const blob = new Blob([htmlContent], { type: "text/html" });
-        chrome.downloads.download({
-          url: URL.createObjectURL(blob),
-          filename,
-          saveAs: true,
-        });
-      } else if (request.format === "md") {
-        const markdownContent = request.content as string;
-        const blob = new Blob([markdownContent], {
-          type: "text/markdown;charset=utf-8",
-        });
-        chrome.downloads.download({
-          url: URL.createObjectURL(blob),
-          filename,
-          saveAs: true,
-        });
-      }
-
+    if (request.action === "getMarkdown" && sender.tab?.id) {
+      chrome.scripting.executeScript({
+        target: { tabId: sender.tab.id },
+        func: () => {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          window.toMarkdown(
+            document.body,
+            (markdown: string) => {
+              chrome.runtime.sendMessage({
+                action: "downloadMarkdown",
+                markdown,
+              });
+            },
+          );
+        },
+      });
+    } else if (request.action === "downloadMarkdown" && request.markdown) {
+      downloadFile(request.markdown, "md");
       sendResponse({ success: true });
-    } catch (error) {
-      if (error instanceof Error) {
-        sendResponse({ success: false, error: error.message });
+    } else if (request.action === "exportChat" && request.format === "html") {
+      if (typeof request.content === "object" && "html" in request.content) {
+        const htmlContent = generateHtml(request.content);
+        downloadFile(htmlContent, "html");
+        sendResponse({ success: true });
       } else {
-        sendResponse({ success: false, error: "An unknown error occurred" });
+        sendResponse({ success: false, error: "Invalid HTML content" });
       }
     }
   },
 );
 
+function downloadFile(content: string, format: "html" | "md") {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `deepseek-chat-${timestamp}.${format}`;
+    const mimeType =
+      format === "html" ? "text/html" : "text/markdown;charset=utf-8";
+
+    const blob = new Blob([content], { type: mimeType });
+    chrome.downloads.download({
+      url: URL.createObjectURL(blob),
+      filename,
+      saveAs: true,
+    });
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+}
 interface HtmlContent {
   html: string;
   styles: string;
