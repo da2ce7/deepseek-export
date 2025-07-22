@@ -7,63 +7,58 @@ chrome.runtime.onMessage.addListener(
   (
     request: {
       action: string;
-      format: string;
-      content: Content;
-      pdfData: string;
+      format: "html" | "md";
+      content: string | HtmlContent;
     },
-    sender: chrome.runtime.MessageSender,
-    sendResponse: (response: { success: boolean }) => void,
+    _sender: chrome.runtime.MessageSender,
+    sendResponse: (_response: { success: boolean; error?: string }) => void,
   ) => {
-    if (request.action === "exportChat") {
+    if (request.action !== "exportChat") {
+      return;
+    }
+
+    try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const filename = `deepseek-chat-${timestamp}.${request.format}`;
 
       if (request.format === "html") {
-        const htmlContent = generateHtml(request.content);
+        const htmlContent = generateHtml(request.content as HtmlContent);
         const blob = new Blob([htmlContent], { type: "text/html" });
         chrome.downloads.download({
           url: URL.createObjectURL(blob),
           filename,
           saveAs: true,
         });
-      } else if (request.format === "pdf") {
-        // Handle PDF download
-        const pdfBlob = dataURLtoBlob(request.pdfData);
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-
+      } else if (request.format === "md") {
+        const markdownContent = request.content as string;
+        const blob = new Blob([markdownContent], {
+          type: "text/markdown;charset=utf-8",
+        });
         chrome.downloads.download({
-          url: pdfUrl,
+          url: URL.createObjectURL(blob),
           filename,
           saveAs: true,
         });
       }
 
       sendResponse({ success: true });
+    } catch (error) {
+      if (error instanceof Error) {
+        sendResponse({ success: false, error: error.message });
+      } else {
+        sendResponse({ success: false, error: "An unknown error occurred" });
+      }
     }
   },
 );
 
-// Helper function to convert data URL to Blob
-function dataURLtoBlob(dataURL: string) {
-  const byteString = atob(dataURL.split(",")[1]);
-  const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-
-  for (let i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-
-  return new Blob([ab], { type: mimeString });
-}
-
-interface Content {
+interface HtmlContent {
   html: string;
   styles: string;
   title: string;
 }
 
-function generateHtml(content: Content) {
+function generateHtml(content: HtmlContent) {
   const sanitizedHtml = DOMPurify.sanitize(content.html);
   const sanitizedStyles = DOMPurify.sanitize(content.styles);
   const escapedTitle = escapeHtml(content.title);
